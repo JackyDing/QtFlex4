@@ -548,7 +548,6 @@ bool DockSite::eventFilter(QObject* obj, QEvent* evt)
                 QApplication::sendPostedEvents();
 
 #ifdef Q_OS_WIN
-                SendMessage((HWND)effectiveWinId(), WM_LBUTTONUP, 0, MAKELONG(pos.x(), pos.y()));
                 SendMessage((HWND)flexWidget->effectiveWinId(), WM_NCLBUTTONDOWN, HTCAPTION, MAKELONG(pos.x(), pos.y()));
 #endif
                 return true;
@@ -660,6 +659,11 @@ void DockSite::mouseMoveEvent(QMouseEvent* evt)
         {
             return;
         }
+        auto pos = QCursor::pos();
+
+#ifdef Q_OS_WIN
+        SendMessage((HWND)effectiveWinId(), WM_LBUTTONUP, 0, MAKELONG(pos.x(), pos.y()));
+#endif
 
         auto dimension = size();
 
@@ -667,20 +671,18 @@ void DockSite::mouseMoveEvent(QMouseEvent* evt)
         
         flexWidget->addDockSite(this, Flex::M, -1);
 
-        auto pos = QCursor::pos();
         auto tl = flexWidget->geometry().topLeft() - flexWidget->frameGeometry().topLeft();
         auto br = flexWidget->frameGeometry().bottomRight() - flexWidget->geometry().bottomRight();
         flexWidget->setGeometry(QRect(pos + tl - impl->_startPoint, dimension - QSize(tl.x(), tl.y()) - QSize(br.x(), br.y())));
         flexWidget->show();
 
+        impl->_startDrag = false;
+
         QApplication::sendPostedEvents();
 
 #ifdef Q_OS_WIN
-        SendMessage((HWND)effectiveWinId(), WM_LBUTTONUP, 0, MAKELONG(pos.x(), pos.y()));
         SendMessage((HWND)flexWidget->effectiveWinId(), WM_NCLBUTTONDOWN, HTCAPTION, MAKELONG(pos.x(), pos.y()));
 #endif
-
-        impl->_startDrag = false;
     }
 }
 
